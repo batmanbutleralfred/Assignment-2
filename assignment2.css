@@ -1,0 +1,47 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    margin-top: 50px;
+}
+h1 {
+    color: #ff7f00;
+}
+.input-group {
+    margin: 10px 0;
+display: flex; /* Aligns input elements horizontally */
+    
+    gap: 10px; /* Adds spacing between the text boxes */
+}
+input {
+    padding:10px;
+    margin: 5px;
+    width: 100px;
+    font-size: 16px;
+    border-width: 1px;
+    border-color: #D3D3D3; /* Added a light gray border color */
+    border-radius: 10px; /* Added to make the input boxes rounded */
+display: inline-block; /* Ensures text boxes are on the same line */
+}
+button {
+    width: 100px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #ff7f00;
+    color: white;
+    border: none;
+    border-radius: 5px; /* Adjusted to make the button more rounded */
+    cursor: pointer;
+}
+button:hover {
+    background-color: #e67300;
+}
+.result {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #333;
+}
