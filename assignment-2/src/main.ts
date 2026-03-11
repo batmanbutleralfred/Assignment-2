@@ -1,6 +1,3 @@
-/**
- * Interfaces for clarity
- */
 interface CubicResults {
     p: number;
     q: number;
@@ -8,7 +5,6 @@ interface CubicResults {
     roots: number[];
 }
 
-// Keep your existing CSS injection (Simplified for TS string template)
 const style: HTMLStyleElement = document.createElement('style');
 style.textContent = `
     body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background-color: #f9f9f9; margin: 0; padding: 20px; }
@@ -25,27 +21,34 @@ style.textContent = `
     .result-table tr td:last-child { text-align: right; font-family: monospace; }
     .orange-header { background-color: #ff7f00; color: white !important; font-weight: bold; }
     .orange-header td { color: white !important; border: none; }
+    .equation-display { 
+        font-size: 1.5rem; 
+        margin-bottom: 25px; 
+        color: #333; 
+        font-style: italic; 
+    }
+    .equation-display span { color: #ff7f00; font-weight: bold; }
 `;
 document.head.appendChild(style);
 
-// Inject HTML
 document.body.innerHTML = `
     <h1>Cubic Root Solver</h1>
+    
+    <div class="equation-display">
+        <span>a</span>x³ + <span>b</span>x² + <span>c</span>x + <span>d</span> = 0
+    </div>
+
     <div class="input-container">
-        <div class="input-box"><label>a</label><input type="number" id="a_val" value=""></div>
-        <div class="input-box"><label>b</label><input type="number" id="b_val" value=""></div>
-        <div class="input-box"><label>c</label><input type="number" id="c_val" value=""></div>
-        <div class="input-box"><label>d</label><input type="number" id="d_val" value=""></div>
+        <div class="input-box"><label>a</label><input type="number" id="a_val" value="1"></div>
+        <div class="input-box"><label>b</label><input type="number" id="b_val" value="0"></div>
+        <div class="input-box"><label>c</label><input type="number" id="c_val" value="0"></div>
+        <div class="input-box"><label>d</label><input type="number" id="d_val" value="0"></div>
     </div>
     <button id="solveBtn">Solve Cubic</button>
     <div id="output"></div>
 `;
 
-/**
- * Main Solver Logic
- */
 const solveCubic = (): void => {
-    // Type casting to HTMLInputElement
     const a = parseFloat((document.getElementById('a_val') as HTMLInputElement).value);
     const b = parseFloat((document.getElementById('b_val') as HTMLInputElement).value);
     const c = parseFloat((document.getElementById('c_val') as HTMLInputElement).value);
@@ -56,7 +59,6 @@ const solveCubic = (): void => {
         return;
     }
 
-    // Cardano's Method constants
     const f: number = ((3 * c / a) - (b * b / (a * a))) / 3;
     const g: number = ((2 * Math.pow(b, 3) / Math.pow(a, 3)) - (9 * b * c / (a * a)) + (27 * d / a)) / 27;
     const h: number = (g * g / 4) + (f * f * f / 27);
@@ -64,7 +66,6 @@ const solveCubic = (): void => {
     let roots: number[] = [];
 
     if (h <= 0) {
-        // 3 Real Roots
         const i = Math.sqrt((g * g / 4) - h);
         const j = Math.pow(i, 1 / 3);
         const k = Math.acos(-(g / (2 * i)));
@@ -77,7 +78,6 @@ const solveCubic = (): void => {
         roots.push(L * (M + N) + P);
         roots.push(L * (M - N) + P);
     } else {
-        // 1 Real Root (Simplified for display)
         const R = -(g / 2) + Math.sqrt(h);
         const S = Math.pow(R, 1 / 3);
         const T = -(g / 2) - Math.sqrt(h);
@@ -88,9 +88,6 @@ const solveCubic = (): void => {
     renderTable({ p: f, q: g, discriminant: h, roots });
 };
 
-/**
- * UI Rendering
- */
 const renderTable = (data: CubicResults): void => {
     const output = document.getElementById('output');
     if (!output) return;
@@ -114,5 +111,4 @@ const renderTable = (data: CubicResults): void => {
     `;
 };
 
-// Event Listener
 document.getElementById('solveBtn')?.addEventListener('click', solveCubic);
