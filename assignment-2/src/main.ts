@@ -5,7 +5,7 @@ interface CubicResults {
     p: number;
     q: number;
     discriminant: number;
-    roots: (number | string)[]; // Supports "Complex Number" strings 
+    roots: (number | string)[]; // Supports "Complex Number" strings [cite: 13]
 }
 
 // 1. Setup CSS [cite: 5]
@@ -19,15 +19,11 @@ style.textContent = `
     input { padding: 10px; width: 80px; border: 1px solid #D3D3D3; border-radius: 8px; text-align: center; }
     button { background-color: #ff7f00; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
     button:hover { background-color: #e67300; }
-
-    /* Side-by-side Layout  */
     .main-content { display: flex; justify-content: center; align-items: flex-start; gap: 40px; flex-wrap: wrap; margin-top: 20px; }
-    
     .result-table { margin: 0; border-collapse: collapse; width: 350px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
     .result-table td { border: 1px solid #f0f0f0; padding: 12px 20px; text-align: left; color: #444; }
     .result-table tr td:last-child { text-align: right; font-family: monospace; }
     .orange-header { background-color: #ff7f00; color: white !important; font-weight: bold; }
-    
     canvas { background: white; border: 1px solid #ddd; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
 `;
 document.head.appendChild(style);
@@ -52,7 +48,7 @@ document.body.innerHTML = `
 /**
  * 3. Graphing Logic using Canvas API 
  */
-const drawGraph = (a: number, b: number, c: number, d: number): void => {
+const drawGraph = (a: number, b: number, c: number, d: number, roots: (number | string)[]): void => {
     const canvas = document.getElementById("graph") as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -62,28 +58,69 @@ const drawGraph = (a: number, b: number, c: number, d: number): void => {
     const h = canvas.height;
     const centerX = w / 2;
     const centerY = h / 2;
-    const scale = 30; // Scale factor for visibility
+    const scale = 30; // 1 unit = 30 pixels
 
-    // Draw Axes [cite: 32, 33, 34, 35]
-    ctx.strokeStyle = "#ddd";
-    ctx.beginPath();
-    ctx.moveTo(0, centerY); ctx.lineTo(w, centerY);
-    ctx.moveTo(centerX, 0); ctx.lineTo(centerX, h);
-    ctx.stroke();
+    // --- GRID LINES ---
+    ctx.strokeStyle = "#e0e0e0";
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= w; x += scale) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0); ctx.lineTo(x, h);
+        ctx.stroke();
+    }
+    for (let y = 0; y <= h; y += scale) {
+        ctx.beginPath();
+        ctx.moveTo(0, y); ctx.lineTo(w, y);
+        ctx.stroke();
+    }
 
-    // Draw Cubic Curve [cite: 36, 37, 42]
-    ctx.strokeStyle = "#ff7f00";
+    // --- AXES [cite: 32, 33, 34, 35] ---
+    ctx.strokeStyle = "#333";
     ctx.lineWidth = 2;
     ctx.beginPath();
+    ctx.moveTo(0, centerY); ctx.lineTo(w, centerY); // X-Axis
+    ctx.moveTo(centerX, 0); ctx.lineTo(centerX, h); // Y-Axis
+    ctx.stroke();
+
+    // --- AXIS NUMBERS ---
+    ctx.fillStyle = "#666";
+    ctx.font = "10px Arial";
+    for (let x = scale; x < w; x += scale) {
+        const val = Math.round((x - centerX) / scale);
+        if (val !== 0) ctx.fillText(val.toString(), x - 4, centerY + 12);
+    }
+
+    // --- CUBIC CURVE [cite: 36, 37, 42] ---
+    ctx.strokeStyle = "#ff7f00";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
     for (let px = 0; px <= w; px++) {
-        const x = (px - centerX) / scale;
-        const y = a * (x ** 3) + b * (x ** 2) + c * x + d;
-        const py = centerY - (y * scale);
-        
+        const xVal = (px - centerX) / scale;
+        const yVal = a * (xVal ** 3) + b * (xVal ** 2) + c * xVal + d;
+        const py = centerY - (yVal * scale);
         if (px === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
     }
     ctx.stroke();
+
+    // --- DOTS FOR INTERCEPTS ---
+    // Y-intercept
+    const pyIntercept = centerY - (d * scale);
+    ctx.fillStyle = "#2196F3"; // Blue for Y
+    ctx.beginPath();
+    ctx.arc(centerX, pyIntercept, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // X-intercepts (Roots)
+    ctx.fillStyle = "#e53935"; // Red for X
+    roots.forEach(r => {
+        if (typeof r === 'number') {
+            const px = centerX + (r * scale);
+            ctx.beginPath();
+            ctx.arc(px, centerY, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
 };
 
 /**
@@ -104,10 +141,7 @@ const renderTable = (data: CubicResults): void => {
             <tr><td>p</td><td>${data.p.toFixed(5)}</td></tr>
             <tr><td>q</td><td>${data.q.toFixed(5)}</td></tr>
             <tr><td>Discriminant</td><td>${data.discriminant.toFixed(5)}</td></tr>
-            <tr class="orange-header">
-                <td>Value</td>
-                <td style="text-align: center">x &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; y</td>
-            </tr>
+            <tr class="orange-header"><td>Value</td><td style="text-align: center">x &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; y</td></tr>
             ${rootHtml}
         </table>
     `;
@@ -122,49 +156,34 @@ const solveCubic = (): void => {
     const c = parseFloat((document.getElementById('c_val') as HTMLInputElement).value) || 0;
     const d = parseFloat((document.getElementById('d_val') as HTMLInputElement).value) || 0;
 
-    if (a === 0) {
-        alert("Coefficient 'a' cannot be zero.");
-        return;
-    }
+    if (a === 0) { alert("Coefficient 'a' cannot be zero."); return; }
 
-    // Display formatted equation 
-    document.getElementById('equation-display')!.innerHTML = 
-        `${a}x³ + ${b}x² + ${c}x + ${d} = 0`;
+    document.getElementById('equation-display')!.innerHTML = `${a}x³ + ${b}x² + ${c}x + ${d} = 0`;
 
-    // Cardano's Calculations
     const f = ((3 * c / a) - (b * b / (a * a))) / 3;
     const g = ((2 * (b ** 3) / (a ** 3)) - (9 * b * c / (a * a)) + (27 * d / a)) / 27;
     const h = (g * g / 4) + (f * f * f / 27);
 
     let roots: (number | string)[] = [];
-
     if (h <= 0) {
-        // Three real roots [cite: 12]
         const i = Math.sqrt((g * g / 4) - h);
         const j = Math.pow(i, 1 / 3);
         const k = Math.acos(-(g / (2 * i)));
-        const L = j * -1;
-        const M = Math.cos(k / 3);
-        const N = Math.sqrt(3) * Math.sin(k / 3);
-        const P = (b / (3 * a)) * -1;
-
+        const L = j * -1; const M = Math.cos(k / 3); const N = Math.sqrt(3) * Math.sin(k / 3); const P = (b / (3 * a)) * -1;
         roots.push(2 * j * Math.cos(k / 3) - (b / (3 * a)));
         roots.push(L * (M + N) + P);
         roots.push(L * (M - N) + P);
     } else {
-        // One real root and two complex roots 
         const R = -(g / 2) + Math.sqrt(h);
         const S = (R < 0) ? -Math.pow(-R, 1/3) : Math.pow(R, 1/3);
         const T = -(g / 2) - Math.sqrt(h);
         const U = (T < 0) ? -Math.pow(-T, 1/3) : Math.pow(T, 1/3);
-        
         roots.push((S + U) - (b / (3 * a)));
-        roots.push("Complex Number"); // 
-        roots.push("Complex Number"); // 
+        roots.push("Complex Number"); roots.push("Complex Number");
     }
 
     renderTable({ p: f, q: g, discriminant: h, roots });
-    drawGraph(a, b, c, d); // 
+    drawGraph(a, b, c, d, roots);
 };
 
 // Event Listener [cite: 11]
